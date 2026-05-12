@@ -1,0 +1,9 @@
+name: track_count
+description: How many tracks exist in the catalog row count.
+type: simple
+entity: track
+measure:
+  expression: "TrackId"
+  aggregation: count
+dimensions:
+  - title

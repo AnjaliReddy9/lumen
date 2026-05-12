@@ -1,0 +1,11 @@
+name: customer
+description: Someone who bought music from the store; billing lives on invoices.
+table: Customer
+primary_key: CustomerId
+dimensions:
+  - name: country
+    column: Country
+    description: Where the customer lives, as entered at signup.
+  - name: full_name
+    expression: "FirstName || ' ' || LastName"
+    description: Full name for greetings and support tickets.

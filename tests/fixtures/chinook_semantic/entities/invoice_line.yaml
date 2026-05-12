@@ -1,0 +1,8 @@
+name: invoice_line
+description: One line on an invoice; quantity times unit price before discounts.
+table: InvoiceLine
+primary_key: InvoiceLineId
+dimensions:
+  - name: line_amount
+    expression: "UnitPrice * Quantity"
+    description: Extended price for this line only.

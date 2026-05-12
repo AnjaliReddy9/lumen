@@ -1,0 +1,11 @@
+name: track
+description: A single recording sold on an album; unit price is per track.
+table: Track
+primary_key: TrackId
+dimensions:
+  - name: title
+    column: Name
+    description: Track title as printed on the release.
+  - name: album_id
+    column: AlbumId
+    description: Which album this track belongs to.

@@ -1,0 +1,15 @@
+name: invoice
+description: A bill for one purchase; ties a customer to line items elsewhere.
+table: Invoice
+primary_key: InvoiceId
+dimensions:
+  - name: billing_country
+    column: BillingCountry
+    description: Country copied onto the invoice for tax and reporting.
+  - name: billing_city
+    column: BillingCity
+    description: City on the billing address at time of sale.
+time_dimensions:
+  - name: invoice_date
+    column: InvoiceDate
+    granularity: day

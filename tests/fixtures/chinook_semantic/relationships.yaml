@@ -1,0 +1,11 @@
+relationships:
+  - from: invoice
+    from_key: CustomerId
+    to: customer
+    to_key: CustomerId
+    type: many_to_one
+  - from: invoice_line
+    from_key: InvoiceId
+    to: invoice
+    to_key: InvoiceId
+    type: many_to_one

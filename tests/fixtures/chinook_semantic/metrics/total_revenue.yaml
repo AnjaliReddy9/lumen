@@ -1,0 +1,11 @@
+name: total_revenue
+description: Sum of invoice totals; each invoice is counted once at header level.
+type: simple
+entity: invoice
+measure:
+  expression: "Total"
+  aggregation: sum
+dimensions:
+  - billing_country
+  - billing_city
+time_dimension: invoice_date
