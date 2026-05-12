@@ -124,6 +124,7 @@ class EvalRunner:
     def __init__(self, generator: SQLGenerator, warehouse: Warehouse) -> None:
         self._generator = generator
         self._warehouse = warehouse
+        self._warehouse_lock = threading.Lock()
 
     def run(
         self,
@@ -234,7 +235,8 @@ class EvalRunner:
             exec_err: str | None = None
             if generated and val_valid and gen_sql:
                 try:
-                    qr = run_generated_sql(generated, wh)
+                    with self._warehouse_lock:
+                        qr = run_generated_sql(generated, wh)
                     if qr.error:
                         exec_err = qr.error
                     else:
