@@ -16,10 +16,13 @@ dependencies = [
     "click",
     "pyyaml>=6",
     "sqlglot>=25.0",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic-settings>=2",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-asyncio", "ruff", "mypy", "types-PyYAML"]
+dev = ["pytest", "pytest-asyncio", "ruff", "mypy", "types-PyYAML", "httpx"]
 
 [project.scripts]
 lumen = "lumen.cli:main"

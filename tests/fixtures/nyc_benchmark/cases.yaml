@@ -1,0 +1,226 @@
+cases:
+  - case_id: nyc_311_01
+    question: How many 311 service requests are stored?
+    expected_sql: SELECT COUNT(*) FROM nyc_311_requests
+    difficulty: easy
+    tags: [311, aggregate]
+  - case_id: nyc_311_02
+    question: Count 311 requests where complaint_type is Noise.
+    expected_sql: SELECT COUNT(*) FROM nyc_311_requests WHERE complaint_type = 'Noise'
+    difficulty: easy
+    tags: [311, filter]
+  - case_id: nyc_311_03
+    question: List distinct borough values from 311 requests.
+    expected_sql: SELECT DISTINCT borough FROM nyc_311_requests
+    difficulty: medium
+    tags: [311, distinct]
+  - case_id: nyc_bp_01
+    question: How many building permit rows exist?
+    expected_sql: SELECT COUNT(*) FROM nyc_building_permits
+    difficulty: easy
+    tags: [permits, aggregate]
+  - case_id: nyc_bp_02
+    question: Count permits with job_type NB.
+    expected_sql: SELECT COUNT(*) FROM nyc_building_permits WHERE job_type = 'NB'
+    difficulty: easy
+    tags: [permits, filter]
+  - case_id: nyc_sch_01
+    question: How many school result records are there?
+    expected_sql: SELECT COUNT(*) FROM nyc_school_results
+    difficulty: easy
+    tags: [schools, aggregate]
+  - case_id: nyc_sch_02
+    question: Average score across all school results.
+    expected_sql: SELECT AVG(score) FROM nyc_school_results
+    difficulty: medium
+    tags: [schools, aggregate]
+  - case_id: nyc_rst_01
+    question: How many restaurant inspection rows?
+    expected_sql: SELECT COUNT(*) FROM nyc_restaurant_inspections
+    difficulty: easy
+    tags: [restaurant, aggregate]
+  - case_id: nyc_rst_02
+    question: Count inspections with grade A.
+    expected_sql: SELECT COUNT(*) FROM nyc_restaurant_inspections WHERE grade = 'A'
+    difficulty: easy
+    tags: [restaurant, filter]
+  - case_id: nyc_cra_01
+    question: Total motor vehicle crash records.
+    expected_sql: SELECT COUNT(*) FROM nyc_vehicle_crashes
+    difficulty: easy
+    tags: [crashes, aggregate]
+  - case_id: nyc_cra_02
+    question: Sum persons_injured across all crashes.
+    expected_sql: SELECT SUM(persons_injured) FROM nyc_vehicle_crashes
+    difficulty: medium
+    tags: [crashes, aggregate]
+  - case_id: nyc_tree_01
+    question: How many street tree records?
+    expected_sql: SELECT COUNT(*) FROM nyc_street_trees
+    difficulty: easy
+    tags: [trees, aggregate]
+  - case_id: nyc_tree_02
+    question: Average tree_dbh for street trees.
+    expected_sql: SELECT AVG(tree_dbh) FROM nyc_street_trees
+    difficulty: medium
+    tags: [trees, aggregate]
+  - case_id: nyc_bike_01
+    question: Count citibike ride rows.
+    expected_sql: SELECT COUNT(*) FROM nyc_citibike_rides
+    difficulty: easy
+    tags: [citibike, aggregate]
+  - case_id: nyc_bike_02
+    question: Total ride_minutes across all citibike rides.
+    expected_sql: SELECT SUM(ride_minutes) FROM nyc_citibike_rides
+    difficulty: medium
+    tags: [citibike, aggregate]
+  - case_id: nyc_air_01
+    question: How many air quality measurements?
+    expected_sql: SELECT COUNT(*) FROM nyc_air_quality
+    difficulty: easy
+    tags: [air, aggregate]
+  - case_id: nyc_air_02
+    question: Average PM2.5 value where pollutant is PM2.5.
+    expected_sql: SELECT AVG(value) FROM nyc_air_quality WHERE pollutant = 'PM2.5'
+    difficulty: hard
+    tags: [air, filter]
+  - case_id: nyc_hv_01
+    question: Count housing violation records.
+    expected_sql: SELECT COUNT(*) FROM nyc_housing_violations
+    difficulty: easy
+    tags: [housing, aggregate]
+  - case_id: nyc_hv_02
+    question: List violation_class values from housing violations.
+    expected_sql: SELECT DISTINCT violation_class FROM nyc_housing_violations
+    difficulty: medium
+    tags: [housing, distinct]
+  - case_id: nyc_film_01
+    question: How many film permit rows?
+    expected_sql: SELECT COUNT(*) FROM nyc_film_permits
+    difficulty: easy
+    tags: [film, aggregate]
+  - case_id: nyc_film_02
+    question: Count film permits where event_type is Shoot.
+    expected_sql: SELECT COUNT(*) FROM nyc_film_permits WHERE event_type = 'Shoot'
+    difficulty: easy
+    tags: [film, filter]
+  - case_id: nyc_cat_010
+    question: Row count for catalog table nyc_catalog_010.
+    expected_sql: SELECT COUNT(*) FROM nyc_catalog_010
+    difficulty: easy
+    tags: [catalog, aggregate]
+  - case_id: nyc_cat_020
+    question: Row count for nyc_catalog_020.
+    expected_sql: SELECT COUNT(*) FROM nyc_catalog_020
+    difficulty: easy
+    tags: [catalog, aggregate]
+  - case_id: nyc_cat_030
+    question: Row count for nyc_catalog_030.
+    expected_sql: SELECT COUNT(*) FROM nyc_catalog_030
+    difficulty: easy
+    tags: [catalog, aggregate]
+  - case_id: nyc_cat_040
+    question: Average v column in nyc_catalog_040.
+    expected_sql: SELECT AVG(v) FROM nyc_catalog_040
+    difficulty: medium
+    tags: [catalog, aggregate]
+  - case_id: nyc_cat_050
+    question: Count rows in nyc_catalog_050 where borough is MN.
+    expected_sql: SELECT COUNT(*) FROM nyc_catalog_050 WHERE borough = 'MN'
+    difficulty: medium
+    tags: [catalog, filter]
+  - case_id: nyc_join_style_01
+    question: Total rows if we union borough from 311 and trees (two selects).
+    expected_sql: SELECT COUNT(*) FROM (SELECT borough FROM nyc_311_requests UNION ALL SELECT borough FROM nyc_street_trees) u
+    difficulty: hard
+    tags: [multi, set]
+  - case_id: nyc_cross_01
+    question: Compare counts of 311 requests and restaurant inspections as two columns.
+    expected_sql: SELECT (SELECT COUNT(*) FROM nyc_311_requests), (SELECT COUNT(*) FROM nyc_restaurant_inspections)
+    difficulty: hard
+    tags: [multi, scalar]
+  - case_id: nyc_date_01
+    question: Latest created_date among 311 requests.
+    expected_sql: SELECT MAX(created_date) FROM nyc_311_requests
+    difficulty: medium
+    tags: [311, date]
+  - case_id: nyc_date_02
+    question: Earliest filing_date among building permits.
+    expected_sql: SELECT MIN(filing_date) FROM nyc_building_permits
+    difficulty: medium
+    tags: [permits, date]
+  - case_id: nyc_sch_03
+    question: Count school rows where subject is ELA.
+    expected_sql: SELECT COUNT(*) FROM nyc_school_results WHERE subject = 'ELA'
+    difficulty: easy
+    tags: [schools, filter]
+  - case_id: nyc_rst_03
+    question: Count restaurants inspected in BK borough.
+    expected_sql: SELECT COUNT(*) FROM nyc_restaurant_inspections WHERE borough = 'BK'
+    difficulty: easy
+    tags: [restaurant, filter]
+  - case_id: nyc_crash_boro
+    question: Count crashes in borough MN.
+    expected_sql: SELECT COUNT(*) FROM nyc_vehicle_crashes WHERE borough = 'MN'
+    difficulty: easy
+    tags: [crashes, filter]
+  - case_id: nyc_tree_species
+    question: Count trees where species is Oak.
+    expected_sql: SELECT COUNT(*) FROM nyc_street_trees WHERE species = 'Oak'
+    difficulty: easy
+    tags: [trees, filter]
+  - case_id: nyc_cat_015
+    question: Select max v from nyc_catalog_015.
+    expected_sql: SELECT MAX(v) FROM nyc_catalog_015
+    difficulty: easy
+    tags: [catalog, aggregate]
+  - case_id: nyc_cat_025
+    question: Select min v from nyc_catalog_025.
+    expected_sql: SELECT MIN(v) FROM nyc_catalog_025
+    difficulty: easy
+    tags: [catalog, aggregate]
+  - case_id: nyc_cat_035
+    question: Count nyc_catalog_035 rows with v greater than 1.
+    expected_sql: SELECT COUNT(*) FROM nyc_catalog_035 WHERE v > 1
+    difficulty: medium
+    tags: [catalog, filter]
+  - case_id: nyc_cat_045
+    question: Count nyc_catalog_045.
+    expected_sql: SELECT COUNT(*) FROM nyc_catalog_045
+    difficulty: easy
+    tags: [catalog, aggregate]
+  - case_id: nyc_cat_051
+    question: Count all rows in nyc_catalog_051.
+    expected_sql: SELECT COUNT(*) FROM nyc_catalog_051
+    difficulty: easy
+    tags: [catalog, aggregate]
+  - case_id: nyc_multi_agg
+    question: For school results, count rows and average score together.
+    expected_sql: SELECT COUNT(*), AVG(score) FROM nyc_school_results
+    difficulty: medium
+    tags: [schools, aggregate]
+  - case_id: nyc_bp_distinct
+    question: Distinct job_type values in building permits.
+    expected_sql: SELECT DISTINCT job_type FROM nyc_building_permits
+    difficulty: medium
+    tags: [permits, distinct]
+  - case_id: nyc_311_complaint_distinct
+    question: Distinct complaint_type in 311 data.
+    expected_sql: SELECT DISTINCT complaint_type FROM nyc_311_requests
+    difficulty: medium
+    tags: [311, distinct]
+  - case_id: nyc_housing_b
+    question: Count housing violations with class B.
+    expected_sql: SELECT COUNT(*) FROM nyc_housing_violations WHERE violation_class = 'B'
+    difficulty: easy
+    tags: [housing, filter]
+  - case_id: nyc_film_park
+    question: Count film permits for Park events.
+    expected_sql: SELECT COUNT(*) FROM nyc_film_permits WHERE event_type = 'Park'
+    difficulty: easy
+    tags: [film, filter]
+  - case_id: nyc_air_distinct_poll
+    question: Distinct pollutants measured in air quality table.
+    expected_sql: SELECT DISTINCT pollutant FROM nyc_air_quality
+    difficulty: easy
+    tags: [air, distinct]

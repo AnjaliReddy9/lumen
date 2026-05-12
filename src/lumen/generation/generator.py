@@ -18,6 +18,7 @@ class GeneratedSQL(BaseModel):
     raw_response: str
     validation: ValidationResult
     attempts: int
+    cost_usd: float = 0.0
 
 
 class SQLGenerator:
@@ -30,6 +31,10 @@ class SQLGenerator:
         self._provider = provider
         self._max_retries = max_retries
         self._interpreter = interpreter
+
+    @property
+    def provider(self) -> LLMProvider:
+        return self._provider
 
     def _ensure_interpreter(self) -> QueryInterpreter:
         if self._interpreter is not None:
@@ -126,6 +131,7 @@ class SQLGenerator:
         last_raw = ""
         current_sql = ""
         last_validation = ValidationResult(valid=False, issues=[], parsed_sql=None)
+        llm_cost_usd = 0.0
 
         while attempts < max_attempts:
             attempts += 1
@@ -141,6 +147,7 @@ class SQLGenerator:
                     dialect,
                 )
                 last_raw = self._provider.generate(usr2, sys2)
+            llm_cost_usd += _take_provider_cost_usd(self._provider)
             cleaned = _strip_markdown_sql_fences(last_raw)
             current_sql = cleaned
 
@@ -153,6 +160,7 @@ class SQLGenerator:
                     raw_response=last_raw,
                     validation=vr,
                     attempts=attempts,
+                    cost_usd=llm_cost_usd,
                 )
 
             last_validation = validator.validate(cleaned, dialect)
@@ -165,6 +173,7 @@ class SQLGenerator:
                     raw_response=last_raw,
                     validation=last_validation,
                     attempts=attempts,
+                    cost_usd=llm_cost_usd,
                 )
 
             if attempts >= max_attempts:
@@ -177,7 +186,15 @@ class SQLGenerator:
             raw_response=last_raw,
             validation=last_validation,
             attempts=attempts,
+            cost_usd=llm_cost_usd,
         )
+
+
+def _take_provider_cost_usd(provider: LLMProvider) -> float:
+    taker = getattr(provider, "take_pending_cost_usd", None)
+    if callable(taker):
+        return float(taker())
+    return 0.0
 
 
 def _strip_markdown_sql_fences(raw: str) -> str:

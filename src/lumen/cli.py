@@ -1,8 +1,15 @@
+import json
+import os
+import uuid
 from pathlib import Path
 
 import click
 
 from lumen import __version__
+from lumen.eval.fake_provider import EvalGroundTruthFakeProvider
+from lumen.eval.load_cases import load_cases_for_benchmark
+from lumen.eval.models import EvalConfig
+from lumen.eval.runner import EvalRunner
 from lumen.generation.generator import GeneratedSQL, SQLGenerator
 from lumen.generation.runner import QueryResult, run_generated_sql
 from lumen.interpretation.models import Interpretation
@@ -347,3 +354,209 @@ def query_ask(
         raise click.ClickException(str(err)) from err
     finally:
         wh.close()
+
+
+@main.group("eval")
+def eval_group() -> None:
+    pass
+
+
+@eval_group.command("run")
+@click.option(
+    "--benchmark",
+    type=click.Choice(["chinook", "spider", "bird", "nyc_open_data"]),
+    required=True,
+)
+@click.option(
+    "--semantic-dir",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
+    required=True,
+)
+@click.option("--warehouse", type=click.Choice(["duckdb", "postgres"]), required=True)
+@click.option("--path", type=str, default=None, help="DuckDB file, SQLite file, or Postgres URL")
+@click.option("--url", type=str, default=None, help="Postgres URL (alternative to --path)")
+@click.option(
+    "--dialect",
+    default="sqlite",
+    show_default=True,
+    help="SQL dialect for validation and prompts",
+)
+@click.option("--output", type=click.Path(path_type=Path), required=True)
+@click.option("--sample", type=int, default=None, help="Run only the first N cases")
+@click.option("--no-interpret", is_flag=True, help="Skip interpretation / explain-back")
+@click.option("--skip-validation", is_flag=True, help="Pass skip_validation to generator")
+@click.option("--spider-path", type=click.Path(path_type=Path), default=None)
+@click.option("--bird-path", type=click.Path(path_type=Path), default=None)
+@click.option("--spider-db-id", type=str, default=None)
+@click.option("--bird-db-id", type=str, default=None)
+@click.option("--seed", type=int, default=42)
+@click.option("--max-retries", type=int, default=2)
+@click.option("--max-concurrency", type=int, default=4)
+@click.option("--max-cost-usd", type=float, default=10.0)
+@click.option(
+    "--fake-llm",
+    is_flag=True,
+    help="Deterministic fake keyed on questions with expected_sql (no Anthropic)",
+)
+@click.option("--run-id", type=str, default=None, help="Optional run id (default: random UUID)")
+def eval_run(
+    benchmark: str,
+    semantic_dir: Path,
+    warehouse: str,
+    path: str | None,
+    url: str | None,
+    dialect: str,
+    output: Path,
+    sample: int | None,
+    no_interpret: bool,
+    skip_validation: bool,
+    spider_path: Path | None,
+    bird_path: Path | None,
+    spider_db_id: str | None,
+    bird_db_id: str | None,
+    seed: int,
+    max_retries: int,
+    max_concurrency: int,
+    max_cost_usd: float,
+    fake_llm: bool,
+    run_id: str | None,
+) -> None:
+    from lumen.interpretation.interpreter import QueryInterpreter
+
+    cases = load_cases_for_benchmark(
+        benchmark,
+        spider_path=spider_path,
+        bird_path=bird_path,
+        spider_db_id=spider_db_id,
+        bird_db_id=bird_db_id,
+        n_cases=100,
+        seed=seed,
+    )
+    model = load_semantic_model(semantic_dir)
+    if warehouse == "postgres" and url is None and path:
+        url = path
+    if warehouse == "duckdb" and path is None:
+        raise click.UsageError("--path is required for duckdb")
+    if warehouse == "postgres" and url is None:
+        raise click.UsageError("--url (or --path with URL) is required for postgres")
+    wh = _open_warehouse(warehouse, path, url)
+    try:
+        schema = wh.introspect()
+        validate_semantic_model(model, schema)
+        if fake_llm or os.environ.get("LUMEN_FAKE_LLM"):
+            mapping = {c.question.strip(): c.expected_sql for c in cases if c.expected_sql}
+            fake = EvalGroundTruthFakeProvider(mapping)
+            model_name = fake.model_name
+            gen = SQLGenerator(
+                fake,
+                max_retries=max_retries,
+                interpreter=QueryInterpreter(fake),
+            )
+        else:
+            anthropic = AnthropicProvider()
+            model_name = anthropic.model_name
+            gen = SQLGenerator(anthropic, max_retries=max_retries)
+        cfg = EvalConfig(
+            use_interpretation=not no_interpret,
+            max_retries=max_retries,
+            max_concurrency=max_concurrency,
+            max_cost_usd=max_cost_usd,
+            sample_size=sample,
+            skip_validation=skip_validation,
+        )
+        rid = run_id or str(uuid.uuid4())
+        runner = EvalRunner(gen, wh)
+        run = runner.run(
+            cases,
+            cfg,
+            semantic_model=model,
+            schema=schema,
+            dialect=dialect,
+            benchmark=benchmark,
+            model_name=model_name,
+            run_id=rid,
+        )
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(run.model_dump_json(indent=2), encoding="utf-8")
+        click.echo(f"wrote {output}")
+        click.echo(
+            f"summary: accuracy={run.summary.execution_accuracy:.3f} "
+            f"validation={run.summary.validation_pass_rate:.3f} "
+            f"gen_ok={run.summary.generation_success_rate:.3f} "
+            f"cost_usd={run.summary.total_cost_usd:.4f}"
+        )
+    except ValueError as err:
+        raise click.ClickException(str(err)) from err
+    finally:
+        wh.close()
+
+
+@eval_group.command("list")
+@click.option(
+    "--runs-dir",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+    default=Path("benchmarks/runs"),
+)
+def eval_list(runs_dir: Path) -> None:
+    if not runs_dir.is_dir():
+        click.echo("(no runs directory)")
+        return
+    rows = sorted(runs_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not rows:
+        click.echo("(no eval run json files)")
+        return
+    for p in rows:
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            rid = data.get("run_id", p.stem)
+            bench = data.get("benchmark", "")
+            done = data.get("cases_completed", "")
+            click.echo(f"{rid}\t{bench}\t{done}")
+        except Exception:
+            click.echo(f"{p.name}\t(unreadable)")
+
+
+@eval_group.command("show")
+@click.argument("run_id")
+@click.option(
+    "--runs-dir",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+    default=Path("benchmarks/runs"),
+)
+def eval_show(run_id: str, runs_dir: Path) -> None:
+    from lumen.eval.models import EvalRun
+
+    for p in runs_dir.glob("*.json"):
+        try:
+            run = EvalRun.model_validate_json(p.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if run.run_id == run_id or p.stem == run_id:
+            click.echo(f"run_id: {run.run_id}")
+            click.echo(f"benchmark: {run.benchmark}")
+            click.echo(f"model: {run.model}")
+            click.echo(f"cases: {run.cases_completed}/{run.cases_total}")
+            click.echo("summary:")
+            s = run.summary
+            click.echo(f"  execution_accuracy: {s.execution_accuracy}")
+            click.echo(f"  validation_pass_rate: {s.validation_pass_rate}")
+            click.echo(f"  generation_success_rate: {s.generation_success_rate}")
+            click.echo(f"  avg_latency_ms: {s.avg_latency_ms}")
+            click.echo(f"  total_cost_usd: {s.total_cost_usd}")
+            return
+    raise click.ClickException(f"run not found: {run_id}")
+
+
+@main.group("api")
+def api_group() -> None:
+    pass
+
+
+@api_group.command("serve")
+@click.option("--host", default="0.0.0.0", show_default=True)
+@click.option("--port", default=8000, show_default=True)
+@click.option("--reload", is_flag=True, help="Dev auto-reload (local only)")
+def api_serve(host: str, port: int, reload: bool) -> None:
+    import uvicorn
+
+    uvicorn.run("lumen.api.app:app", host=host, port=port, reload=reload)

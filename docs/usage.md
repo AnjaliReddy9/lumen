@@ -160,3 +160,35 @@ lumen query ask "How many tracks are in each genre?" \
 ```
 
 Skips the interpreter call; output starts at `--- generated sql ---` as in session 4.
+
+---
+
+## `lumen eval run`
+
+Runs a benchmark case list through `SQLGenerator` + warehouse execution, writes JSON results, and checkpoints every 10 cases to `benchmarks/runs/<run_id>.jsonl`.
+
+```bash
+lumen eval run --benchmark chinook --sample 5 \
+  --semantic-dir tests/fixtures/chinook_semantic \
+  --warehouse duckdb --path /tmp/chinook.sqlite --dialect sqlite \
+  --output benchmarks/runs/smoke.json --fake-llm --no-interpret
+```
+
+Spider and BIRD require `--spider-path` / `--bird-path` (JSON arrays). Use `--spider-db-id` / `--bird-db-id` to keep a single SQLite database per run when using DuckDB attach.
+
+## `lumen eval list` / `lumen eval show`
+
+```bash
+lumen eval list --runs-dir benchmarks/runs
+lumen eval show <run_id> --runs-dir benchmarks/runs
+```
+
+---
+
+## `lumen api serve`
+
+Runs the FastAPI app with uvicorn (reads `.env` / environment variables).
+
+```bash
+lumen api serve --host 0.0.0.0 --port 8000 --reload
+```

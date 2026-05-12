@@ -1,0 +1,52 @@
+cases:
+  - case_id: chinook_track_count
+    question: How many tracks are there?
+    expected_sql: SELECT COUNT(*) AS n FROM lumen_sqlite.Track
+    expected_rows:
+      - {n: 3503}
+    database: chinook
+    dialect: sqlite
+    difficulty: easy
+    tags: [chinook, smoke]
+
+  - case_id: chinook_invoice_count
+    question: How many invoices are in the database?
+    expected_sql: SELECT COUNT(*) AS n FROM lumen_sqlite.Invoice
+    expected_rows:
+      - {n: 412}
+    database: chinook
+    dialect: sqlite
+    difficulty: easy
+    tags: [chinook]
+
+  - case_id: chinook_gmail_customers
+    question: How many customers have an email ending with @gmail.com?
+    expected_sql: SELECT COUNT(*) AS n FROM lumen_sqlite.Customer WHERE Email LIKE '%@gmail.com'
+    expected_rows:
+      - {n: 8}
+    database: chinook
+    dialect: sqlite
+    difficulty: medium
+    tags: [chinook]
+
+  - case_id: chinook_genre_names
+    question: List all genre names sorted alphabetically.
+    expected_sql: SELECT Name FROM lumen_sqlite.Genre ORDER BY Name
+    database: chinook
+    dialect: sqlite
+    difficulty: easy
+    tags: [chinook]
+
+  - case_id: chinook_albums_by_artist
+    question: Which artist has the most albums? Return artist name and album count.
+    expected_sql: |
+      SELECT ar.Name, COUNT(*) AS c
+      FROM lumen_sqlite.Album al
+      JOIN lumen_sqlite.Artist ar ON al.ArtistId = ar.ArtistId
+      GROUP BY ar.Name ORDER BY c DESC LIMIT 1
+    expected_rows:
+      - {Name: Iron Maiden, c: 21}
+    database: chinook
+    dialect: sqlite
+    difficulty: hard
+    tags: [chinook]

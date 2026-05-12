@@ -1,0 +1,364 @@
+- name: entity_nyc_311_requests
+  description: Semantic entity for nyc_311_requests
+  table: nyc_311_requests
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_building_permits
+  description: Semantic entity for nyc_building_permits
+  table: nyc_building_permits
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_school_results
+  description: Semantic entity for nyc_school_results
+  table: nyc_school_results
+  primary_key: id
+  dimensions:
+  - name: district
+    column: district
+- name: entity_nyc_restaurant_inspections
+  description: Semantic entity for nyc_restaurant_inspections
+  table: nyc_restaurant_inspections
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_vehicle_crashes
+  description: Semantic entity for nyc_vehicle_crashes
+  table: nyc_vehicle_crashes
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_street_trees
+  description: Semantic entity for nyc_street_trees
+  table: nyc_street_trees
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_citibike_rides
+  description: Semantic entity for nyc_citibike_rides
+  table: nyc_citibike_rides
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_air_quality
+  description: Semantic entity for nyc_air_quality
+  table: nyc_air_quality
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_housing_violations
+  description: Semantic entity for nyc_housing_violations
+  table: nyc_housing_violations
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_film_permits
+  description: Semantic entity for nyc_film_permits
+  table: nyc_film_permits
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_010
+  description: Semantic entity for nyc_catalog_010
+  table: nyc_catalog_010
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_011
+  description: Semantic entity for nyc_catalog_011
+  table: nyc_catalog_011
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_012
+  description: Semantic entity for nyc_catalog_012
+  table: nyc_catalog_012
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_013
+  description: Semantic entity for nyc_catalog_013
+  table: nyc_catalog_013
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_014
+  description: Semantic entity for nyc_catalog_014
+  table: nyc_catalog_014
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_015
+  description: Semantic entity for nyc_catalog_015
+  table: nyc_catalog_015
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_016
+  description: Semantic entity for nyc_catalog_016
+  table: nyc_catalog_016
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_017
+  description: Semantic entity for nyc_catalog_017
+  table: nyc_catalog_017
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_018
+  description: Semantic entity for nyc_catalog_018
+  table: nyc_catalog_018
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_019
+  description: Semantic entity for nyc_catalog_019
+  table: nyc_catalog_019
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_020
+  description: Semantic entity for nyc_catalog_020
+  table: nyc_catalog_020
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_021
+  description: Semantic entity for nyc_catalog_021
+  table: nyc_catalog_021
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_022
+  description: Semantic entity for nyc_catalog_022
+  table: nyc_catalog_022
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_023
+  description: Semantic entity for nyc_catalog_023
+  table: nyc_catalog_023
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_024
+  description: Semantic entity for nyc_catalog_024
+  table: nyc_catalog_024
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_025
+  description: Semantic entity for nyc_catalog_025
+  table: nyc_catalog_025
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_026
+  description: Semantic entity for nyc_catalog_026
+  table: nyc_catalog_026
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_027
+  description: Semantic entity for nyc_catalog_027
+  table: nyc_catalog_027
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_028
+  description: Semantic entity for nyc_catalog_028
+  table: nyc_catalog_028
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_029
+  description: Semantic entity for nyc_catalog_029
+  table: nyc_catalog_029
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_030
+  description: Semantic entity for nyc_catalog_030
+  table: nyc_catalog_030
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_031
+  description: Semantic entity for nyc_catalog_031
+  table: nyc_catalog_031
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_032
+  description: Semantic entity for nyc_catalog_032
+  table: nyc_catalog_032
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_033
+  description: Semantic entity for nyc_catalog_033
+  table: nyc_catalog_033
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_034
+  description: Semantic entity for nyc_catalog_034
+  table: nyc_catalog_034
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_035
+  description: Semantic entity for nyc_catalog_035
+  table: nyc_catalog_035
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_036
+  description: Semantic entity for nyc_catalog_036
+  table: nyc_catalog_036
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_037
+  description: Semantic entity for nyc_catalog_037
+  table: nyc_catalog_037
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_038
+  description: Semantic entity for nyc_catalog_038
+  table: nyc_catalog_038
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_039
+  description: Semantic entity for nyc_catalog_039
+  table: nyc_catalog_039
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_040
+  description: Semantic entity for nyc_catalog_040
+  table: nyc_catalog_040
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_041
+  description: Semantic entity for nyc_catalog_041
+  table: nyc_catalog_041
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_042
+  description: Semantic entity for nyc_catalog_042
+  table: nyc_catalog_042
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_043
+  description: Semantic entity for nyc_catalog_043
+  table: nyc_catalog_043
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_044
+  description: Semantic entity for nyc_catalog_044
+  table: nyc_catalog_044
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_045
+  description: Semantic entity for nyc_catalog_045
+  table: nyc_catalog_045
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_046
+  description: Semantic entity for nyc_catalog_046
+  table: nyc_catalog_046
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_047
+  description: Semantic entity for nyc_catalog_047
+  table: nyc_catalog_047
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_048
+  description: Semantic entity for nyc_catalog_048
+  table: nyc_catalog_048
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_049
+  description: Semantic entity for nyc_catalog_049
+  table: nyc_catalog_049
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_050
+  description: Semantic entity for nyc_catalog_050
+  table: nyc_catalog_050
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough
+- name: entity_nyc_catalog_051
+  description: Semantic entity for nyc_catalog_051
+  table: nyc_catalog_051
+  primary_key: id
+  dimensions:
+  - name: borough
+    column: borough

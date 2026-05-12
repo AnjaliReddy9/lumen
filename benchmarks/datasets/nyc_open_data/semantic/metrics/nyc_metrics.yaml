@@ -1,0 +1,364 @@
+- name: rowcount_nyc_311_requests
+  type: simple
+  entity: entity_nyc_311_requests
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_building_permits
+  type: simple
+  entity: entity_nyc_building_permits
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_school_results
+  type: simple
+  entity: entity_nyc_school_results
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_restaurant_inspections
+  type: simple
+  entity: entity_nyc_restaurant_inspections
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_vehicle_crashes
+  type: simple
+  entity: entity_nyc_vehicle_crashes
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_street_trees
+  type: simple
+  entity: entity_nyc_street_trees
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_citibike_rides
+  type: simple
+  entity: entity_nyc_citibike_rides
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_air_quality
+  type: simple
+  entity: entity_nyc_air_quality
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_housing_violations
+  type: simple
+  entity: entity_nyc_housing_violations
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_film_permits
+  type: simple
+  entity: entity_nyc_film_permits
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_010
+  type: simple
+  entity: entity_nyc_catalog_010
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_011
+  type: simple
+  entity: entity_nyc_catalog_011
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_012
+  type: simple
+  entity: entity_nyc_catalog_012
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_013
+  type: simple
+  entity: entity_nyc_catalog_013
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_014
+  type: simple
+  entity: entity_nyc_catalog_014
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_015
+  type: simple
+  entity: entity_nyc_catalog_015
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_016
+  type: simple
+  entity: entity_nyc_catalog_016
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_017
+  type: simple
+  entity: entity_nyc_catalog_017
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_018
+  type: simple
+  entity: entity_nyc_catalog_018
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_019
+  type: simple
+  entity: entity_nyc_catalog_019
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_020
+  type: simple
+  entity: entity_nyc_catalog_020
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_021
+  type: simple
+  entity: entity_nyc_catalog_021
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_022
+  type: simple
+  entity: entity_nyc_catalog_022
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_023
+  type: simple
+  entity: entity_nyc_catalog_023
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_024
+  type: simple
+  entity: entity_nyc_catalog_024
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_025
+  type: simple
+  entity: entity_nyc_catalog_025
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_026
+  type: simple
+  entity: entity_nyc_catalog_026
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_027
+  type: simple
+  entity: entity_nyc_catalog_027
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_028
+  type: simple
+  entity: entity_nyc_catalog_028
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_029
+  type: simple
+  entity: entity_nyc_catalog_029
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_030
+  type: simple
+  entity: entity_nyc_catalog_030
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_031
+  type: simple
+  entity: entity_nyc_catalog_031
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_032
+  type: simple
+  entity: entity_nyc_catalog_032
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_033
+  type: simple
+  entity: entity_nyc_catalog_033
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_034
+  type: simple
+  entity: entity_nyc_catalog_034
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_035
+  type: simple
+  entity: entity_nyc_catalog_035
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_036
+  type: simple
+  entity: entity_nyc_catalog_036
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_037
+  type: simple
+  entity: entity_nyc_catalog_037
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_038
+  type: simple
+  entity: entity_nyc_catalog_038
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_039
+  type: simple
+  entity: entity_nyc_catalog_039
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_040
+  type: simple
+  entity: entity_nyc_catalog_040
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_041
+  type: simple
+  entity: entity_nyc_catalog_041
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_042
+  type: simple
+  entity: entity_nyc_catalog_042
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_043
+  type: simple
+  entity: entity_nyc_catalog_043
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_044
+  type: simple
+  entity: entity_nyc_catalog_044
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_045
+  type: simple
+  entity: entity_nyc_catalog_045
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_046
+  type: simple
+  entity: entity_nyc_catalog_046
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_047
+  type: simple
+  entity: entity_nyc_catalog_047
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_048
+  type: simple
+  entity: entity_nyc_catalog_048
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_049
+  type: simple
+  entity: entity_nyc_catalog_049
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_050
+  type: simple
+  entity: entity_nyc_catalog_050
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []
+- name: rowcount_nyc_catalog_051
+  type: simple
+  entity: entity_nyc_catalog_051
+  measure:
+    expression: '1'
+    aggregation: count
+  dimensions: []

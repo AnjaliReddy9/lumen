@@ -1,0 +1,23 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      LUMEN_SEMANTIC_DIR: /data/semantic
+      LUMEN_WAREHOUSE_PATH: /data/warehouse.db
+      LUMEN_WAREHOUSE_TYPE: duckdb
+      LUMEN_DIALECT: ${LUMEN_DIALECT:-sqlite}
+    volumes:
+      - ${LUMEN_SEMANTIC_HOST_DIR:-./tests/fixtures/chinook_semantic}:/data/semantic:ro
+      - ${LUMEN_WAREHOUSE_HOST_PATH:-./tests/fixtures}:/data:ro
+
+  # db:
+  #   image: postgres:16
+  #   environment:
+  #     POSTGRES_PASSWORD: example
+  #   ports:
+  #     - "5432:5432"
