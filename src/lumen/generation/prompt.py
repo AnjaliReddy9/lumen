@@ -1,3 +1,4 @@
+from lumen.interpretation.models import QueryIntent
 from lumen.semantic.models import SemanticModel
 from lumen.validation.models import ValidationIssue
 from lumen.warehouse.schema import Schema
@@ -60,6 +61,7 @@ def build_sql_prompt(
     semantic_model: SemanticModel,
     schema: Schema,
     dialect: str,
+    intent: QueryIntent | None = None,
 ) -> tuple[str, str]:
     # System stays short; user block carries semantic + physical schema.
     system = (
@@ -76,6 +78,31 @@ def build_sql_prompt(
     )
 
     lines: list[str] = []
+    if intent is not None:
+        lines.append("=== INTERPRETED INTENT ===")
+        lines.append(f"Summary: {intent.intent_summary}")
+        if intent.entities_referenced:
+            lines.append(f"Entities: {', '.join(intent.entities_referenced)}")
+        if intent.metrics_referenced:
+            lines.append(f"Metrics: {', '.join(intent.metrics_referenced)}")
+        if intent.dimensions_referenced:
+            lines.append(f"Dimensions: {', '.join(intent.dimensions_referenced)}")
+        if intent.time_grain:
+            lines.append(f"Time grain: {intent.time_grain}")
+        if intent.filters:
+            lines.append("Filters:")
+            for f in intent.filters:
+                lines.append(
+                    f"  - {f.column_or_dimension} {f.operator} {f.value!r} "
+                    f"(confidence {f.confidence})"
+                )
+        if intent.sort:
+            lines.append(
+                f"Sort: {intent.sort.column_or_dimension} {intent.sort.direction.upper()}"
+            )
+        if intent.limit is not None:
+            lines.append(f"Limit: {intent.limit}")
+        lines.append("")
     lines.append("=== QUESTION ===")
     lines.append(question.strip())
     lines.append("")

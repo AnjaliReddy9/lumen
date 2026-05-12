@@ -1,6 +1,9 @@
 from pydantic import BaseModel
 
 from lumen.generation.prompt import build_correction_prompt, build_sql_prompt
+from lumen.interpretation.interpreter import QueryInterpreter
+from lumen.interpretation.models import Interpretation, QueryIntent
+from lumen.llm.anthropic_provider import AnthropicProvider
 from lumen.llm.base import LLMProvider
 from lumen.semantic.models import SemanticModel
 from lumen.validation.models import ValidationResult
@@ -18,9 +21,26 @@ class GeneratedSQL(BaseModel):
 
 
 class SQLGenerator:
-    def __init__(self, provider: LLMProvider, max_retries: int = 2) -> None:
+    def __init__(
+        self,
+        provider: LLMProvider,
+        max_retries: int = 2,
+        interpreter: QueryInterpreter | None = None,
+    ) -> None:
         self._provider = provider
         self._max_retries = max_retries
+        self._interpreter = interpreter
+
+    def _ensure_interpreter(self) -> QueryInterpreter:
+        if self._interpreter is not None:
+            return self._interpreter
+        if isinstance(self._provider, AnthropicProvider):
+            self._interpreter = QueryInterpreter(self._provider)
+            return self._interpreter
+        raise TypeError(
+            "SQL interpretation requires AnthropicProvider or pass interpreter= to "
+            "SQLGenerator"
+        )
 
     def generate(
         self,
@@ -31,8 +51,76 @@ class SQLGenerator:
         *,
         skip_validation: bool = False,
     ) -> GeneratedSQL:
+        return self._generate_sql(
+            question,
+            semantic_model,
+            schema,
+            dialect,
+            intent=None,
+            skip_validation=skip_validation,
+        )
+
+    def generate_with_interpretation(
+        self,
+        question: str,
+        semantic_model: SemanticModel,
+        schema: Schema,
+        dialect: str,
+        *,
+        skip_validation: bool = False,
+    ) -> tuple[Interpretation, GeneratedSQL | None]:
+        interp = self._ensure_interpreter().interpret(
+            question, semantic_model, schema, dialect
+        )
+        if interp.ambiguities:
+            return (interp, None)
+        gen = self._generate_sql(
+            question,
+            semantic_model,
+            schema,
+            dialect,
+            intent=interp.intent,
+            skip_validation=skip_validation,
+        )
+        return (interp, gen)
+
+    def generate_with_resolutions(
+        self,
+        question: str,
+        semantic_model: SemanticModel,
+        schema: Schema,
+        dialect: str,
+        resolutions: dict[str, str],
+        *,
+        skip_validation: bool = False,
+    ) -> tuple[Interpretation, GeneratedSQL]:
+        interp = self._ensure_interpreter().interpret(
+            question, semantic_model, schema, dialect, resolutions=resolutions
+        )
+        gen = self._generate_sql(
+            question,
+            semantic_model,
+            schema,
+            dialect,
+            intent=interp.intent,
+            skip_validation=skip_validation,
+        )
+        return (interp, gen)
+
+    def _generate_sql(
+        self,
+        question: str,
+        semantic_model: SemanticModel,
+        schema: Schema,
+        dialect: str,
+        *,
+        intent: QueryIntent | None,
+        skip_validation: bool,
+    ) -> GeneratedSQL:
         validator = SQLValidator(schema)
-        system, user = build_sql_prompt(question, semantic_model, schema, dialect)
+        system, user = build_sql_prompt(
+            question, semantic_model, schema, dialect, intent=intent
+        )
         max_attempts = self._max_retries + 1
         attempts = 0
         last_raw = ""
