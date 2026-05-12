@@ -52,7 +52,7 @@ On success, one line such as: `semantic model is valid (E entities, M metrics, R
 
 ## `lumen query ask`
 
-Loads and validates the semantic model, builds a prompt from the question plus semantic text plus warehouse schema, calls Claude to produce one SQL string, prints it, then runs it against the same warehouse unless `--dry-run` is set.
+Loads and validates the semantic model, builds a prompt from the question plus semantic text plus warehouse schema, calls Claude to produce SQL, then runs **schema-aware validation** on the result. If validation passes, the CLI executes the statement against the same warehouse (unless `--dry-run`). If validation fails after the configured retries, the CLI prints the issues and exits with code 1 without executing.
 
 **Usage**
 
@@ -62,7 +62,7 @@ lumen query ask "Your question in natural language" \
   --warehouse duckdb --path /path/to/database.sqlite
 ```
 
-Append `--dry-run` to skip execution after printing SQL. Set `ANTHROPIC_API_KEY` in the environment; both normal and dry-run paths invoke the API for generation.
+Append `--dry-run` to skip execution after printing SQL and validation. Set `ANTHROPIC_API_KEY` in the environment; both normal and dry-run paths invoke the API for generation (and for correction rounds when validation fails).
 
 **Flags**
 
@@ -70,9 +70,14 @@ Append `--dry-run` to skip execution after printing SQL. Set `ANTHROPIC_API_KEY`
 - `--semantic-dir` (required): semantic YAML directory, same as validate.
 - `--warehouse` (required): `duckdb` or `postgres`.
 - `--path` or `--url`: same as above.
-- `--dialect` (optional, default `sqlite`): dialect name embedded in the system prompt (e.g. `sqlite`, `postgresql`, `duckdb`). The CLI does not infer this from the warehouse yet.
-- `--dry-run` (optional): generate and print SQL only.
+- `--dialect` (optional, default `sqlite`): dialect name for the LLM prompt and for sqlglot parsing (e.g. `sqlite`, `postgresql`, `duckdb`). The CLI does not infer this from the warehouse yet.
+- `--dry-run` (optional): generate and print output only; do not execute against the warehouse.
+- `--skip-validation` (optional): do not run sqlglot validation or block execution on validation failure. Intended for debugging prompts; generated SQL may reference non-existent tables or columns.
 
 **Output**
 
-A line `--- generated sql ---`, then the SQL text. Without `--dry-run`, a line `--- result ---` follows: either a tab-separated header and rows, `(no rows)`, or `execution error: ...` with the database message. The implementation does not validate SQL before execution; invalid SQL surfaces as an execution error.
+1. A line `--- generated sql ---`, then the latest generated SQL text (possibly after retries).
+2. A block `--- validation ---` with `valid: yes` or `valid: no`, `attempts: N`, optional `canonical_sql:` when validation succeeded, and an `issues:` list with one line per problem (`[error] code: message`) when there are issues.
+3. Unless `--dry-run` or validation ultimately failed (and `--skip-validation` was not used), a line `--- result ---` followed by either a tab-separated header and rows, `(no rows)`, or `execution error: ...` from DuckDB or Postgres.
+
+If validation fails and `--skip-validation` is not set, you will see `validation failed; not executing SQL.` and the process exits with status 1. For details on validation, see [docs/validation.md](validation.md).

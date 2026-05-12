@@ -2,9 +2,13 @@
 
 Natural-language questions over a real warehouse, grounded in a YAML semantic layer and Claude-generated SQL.
 
+### Schema-aware validation
+
+Lumen parses generated SQL and validates every table and column reference against the live warehouse schema before execution. Hallucinated identifiers are collected into a structured result, and the model may be asked to correct them in a follow-up turn, with available column names surfaced in the retry prompt. Today this works for `SELECT` queries including joins, common table expressions, and subqueries, with up to two correction rounds after the initial generation. `INSERT`, `UPDATE`, `DELETE`, and DDL are rejected by the validator because Lumen is read-only by design.
+
 ## Status
 
-Lumen is in active development. Today you can point the CLI at a DuckDB-attached SQLite file or Postgres, introspect table and column metadata, load a semantic model from a directory of YAML files, validate that model against the live schema, and ask an analytics question in plain English: the tool builds a prompt from the question, semantic definitions, and schema, calls the Anthropic API for a single SQL statement, optionally runs it, and prints the result or the database error. What is not here yet includes schema-aware validation of generated SQL, retry or ambiguity handling, explain-back to the user before execution, a web UI, and benchmark numbers. Those are planned as the pipeline hardens.
+Lumen is in active development. Today you can point the CLI at a DuckDB-attached SQLite file or Postgres, introspect table and column metadata, load a semantic model from a directory of YAML files, validate that model against the live schema, and ask an analytics question in plain English. The pipeline builds prompts from the question, semantic definitions, and physical schema, calls the Anthropic API for SQL, validates identifiers with sqlglot, optionally retries with a corrective prompt when validation fails, runs the statement only if validation succeeded (unless you opt out with a debug flag), and prints rows or a captured execution error. What is not here yet includes ambiguity resolution and explain-back to the user before running, a web UI, and benchmark numbers. Those are planned as the pipeline hardens.
 
 ## Quickstart
 
@@ -38,7 +42,7 @@ lumen semantic validate --semantic-dir tests/fixtures/chinook_semantic \
   --warehouse duckdb --path /tmp/chinook.sqlite
 ```
 
-Ask a question. The CLI prints the generated SQL, then a tab-separated result table (or an execution error string if the model produced invalid SQL):
+Ask a question. The CLI prints the generated SQL, a short validation summary (including canonical SQL when validation passes), then a tab-separated result table. If validation still fails after retries, it prints the issues and exits without executing. Add `--dry-run` to skip execution while still calling the model; add `--skip-validation` only when debugging prompts or parser behavior.
 
 ```bash
 lumen query ask "What is the total revenue by country?" \
@@ -46,9 +50,7 @@ lumen query ask "What is the total revenue by country?" \
   --warehouse duckdb --path /tmp/chinook.sqlite --dialect sqlite
 ```
 
-To print SQL only without executing against the warehouse, add `--dry-run`. Generation still calls the API, so the key must remain set.
-
-CLI flags and behavior for the three commands are documented in [docs/usage.md](docs/usage.md).
+CLI flags and behavior for the three commands are documented in [docs/usage.md](docs/usage.md). How validation works under the hood is documented in [docs/validation.md](docs/validation.md).
 
 ## Project structure
 
@@ -57,8 +59,8 @@ src/lumen/
   __init__.py           Package version exposed to the CLI.
   cli.py                Click entrypoint: schema, semantic, and query commands.
   generation/
-    prompt.py           Builds system and user prompts for SQL generation.
-    generator.py        Calls an LLM provider and returns cleaned SQL plus raw text.
+    prompt.py           Builds initial and corrective prompts for SQL generation.
+    generator.py        LLM loop, markdown cleanup, validation, and retries.
     runner.py           Executes generated SQL and captures rows or errors.
   llm/
     base.py             LLMProvider protocol (text in, text out).
@@ -67,6 +69,10 @@ src/lumen/
     models.py           Pydantic types for entities, metrics, and relationships.
     loader.py           Loads YAML from a semantic directory.
     validator.py        Checks semantic definitions against introspected schema.
+  validation/
+    parser.py           sqlglot wrapper: parse SQL for a dialect or return None.
+    models.py           ValidationIssue and ValidationResult types.
+    validator.py        AST walk for tables, columns, CTEs, and subqueries.
   warehouse/
     base.py             Warehouse protocol and shared types.
     schema.py           Introspected table, column, and foreign-key records.
