@@ -41,6 +41,8 @@ def test_generator_strips_markdown_sql_fence() -> None:
     assert out.raw_response == raw
     assert "SELECT 1 AS x" in out.sql
     assert "```" not in out.sql
+    assert out.validation.valid
+    assert out.attempts == 1
 
 
 def test_generator_strips_plain_fence() -> None:
@@ -70,6 +72,7 @@ def test_generator_strips_plain_fence() -> None:
     gen = SQLGenerator(_FakeProvider(raw))
     out = gen.generate("q", model, schema, "sqlite")
     assert out.sql.strip() == "SELECT 2"
+    assert out.validation.valid
 
 
 def test_fake_provider_structural_llm() -> None:

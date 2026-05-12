@@ -1,5 +1,6 @@
 from lumen.generation.generator import GeneratedSQL
 from lumen.generation.runner import run_generated_sql
+from lumen.validation.models import ValidationResult
 from lumen.warehouse.duckdb_warehouse import DuckDBWarehouse
 
 
@@ -12,6 +13,8 @@ def test_runner_success_path() -> None:
             sql="select sum(a) as s from t",
             dialect="duckdb",
             raw_response="",
+            validation=ValidationResult(valid=True, issues=[], parsed_sql=None),
+            attempts=1,
         )
         res = run_generated_sql(gen, wh)
         assert res.error is None
@@ -29,6 +32,8 @@ def test_runner_captures_execution_error() -> None:
             sql="select * from does_not_exist",
             dialect="duckdb",
             raw_response="",
+            validation=ValidationResult(valid=True, issues=[], parsed_sql=None),
+            attempts=1,
         )
         res = run_generated_sql(gen, wh)
         assert res.error is not None
