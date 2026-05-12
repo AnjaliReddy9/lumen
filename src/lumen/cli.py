@@ -3,7 +3,7 @@ from pathlib import Path
 import click
 
 from lumen import __version__
-from lumen.generation.generator import SQLGenerator
+from lumen.generation.generator import GeneratedSQL, SQLGenerator
 from lumen.generation.runner import QueryResult, run_generated_sql
 from lumen.llm.anthropic_provider import AnthropicProvider
 from lumen.semantic.loader import load_semantic_model
@@ -121,6 +121,20 @@ def _print_query_result(result: QueryResult) -> None:
         click.echo("\t".join(str(row.get(c, "")) for c in cols))
 
 
+def _print_validation_summary(generated: GeneratedSQL) -> None:
+    vr = generated.validation
+    click.echo("--- validation ---")
+    click.echo(f"valid: {'yes' if vr.valid else 'no'}")
+    click.echo(f"attempts: {generated.attempts}")
+    if vr.parsed_sql and vr.valid:
+        click.echo("canonical_sql:")
+        click.echo(vr.parsed_sql)
+    if vr.issues:
+        click.echo("issues:")
+        for issue in vr.issues:
+            click.echo(f"  [{issue.severity}] {issue.code}: {issue.message}")
+
+
 @main.group("query")
 def query_group() -> None:
     pass
@@ -140,10 +154,17 @@ def query_group() -> None:
     "--dialect",
     default="sqlite",
     show_default=True,
-    help="SQL dialect name for the prompt",
+    help="SQL dialect name for the prompt and parser",
 )
 @click.option("--dry-run", is_flag=True, help="Generate SQL only; do not execute")
+@click.option(
+    "--skip-validation",
+    is_flag=True,
+    help="Skip schema-aware SQL validation (debug only; execution may still fail)",
+)
+@click.pass_context
 def query_ask(
+    ctx: click.Context,
     question: tuple[str, ...],
     semantic_dir: Path,
     warehouse: str,
@@ -151,6 +172,7 @@ def query_ask(
     url: str | None,
     dialect: str,
     dry_run: bool,
+    skip_validation: bool,
 ) -> None:
     question_text = " ".join(question).strip()
     if not question_text:
@@ -162,9 +184,15 @@ def query_ask(
         validate_semantic_model(model, schema)
         provider = AnthropicProvider()
         gen = SQLGenerator(provider)
-        generated = gen.generate(question_text, model, schema, dialect)
+        generated = gen.generate(
+            question_text, model, schema, dialect, skip_validation=skip_validation
+        )
         click.echo("--- generated sql ---")
         click.echo(generated.sql)
+        _print_validation_summary(generated)
+        if not skip_validation and not generated.validation.valid:
+            click.echo("validation failed; not executing SQL.")
+            ctx.exit(1)
         if dry_run:
             return
         result = run_generated_sql(generated, wh)
