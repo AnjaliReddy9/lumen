@@ -1,0 +1,5 @@
+#!/bin/sh
+# Drop Cursor co-author lines so they never reach the recorded commit message.
+msg="$1"
+tmp="${msg}.lumen-hook.$$"
+grep -v '^Co-authored-by:[[:space:]]*[Cc]ursor' "$msg" > "$tmp" && mv "$tmp" "$msg"
