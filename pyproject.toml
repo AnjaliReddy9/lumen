@@ -15,6 +15,7 @@ dependencies = [
     "sqlalchemy",
     "click",
     "pyyaml>=6",
+    "sqlglot>=25.0",
 ]
 
 [project.optional-dependencies]
