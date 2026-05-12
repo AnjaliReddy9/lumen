@@ -1,0 +1,95 @@
+<div class="space-y-8">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight text-text">Schema</h1>
+    <p class="mt-1 text-sm text-text-secondary">Semantic entities and warehouse tables.</p>
+  </div>
+
+  @if (loading()) {
+    <p class="text-sm text-text-muted">Loading…</p>
+  } @else {
+    <div class="grid gap-8 lg:grid-cols-2">
+      <lum-card title="Entities">
+        <ul class="divide-y divide-border">
+          @for (e of semantic()!.entities; track e.name) {
+            <li>
+              <button
+                type="button"
+                (click)="selectEntity(e)"
+                class="w-full px-2 py-3 text-left text-sm transition-colors duration-100 hover:bg-border/30"
+                [class.text-accent]="selectedEntity()?.name === e.name"
+                [class.text-text]="selectedEntity()?.name !== e.name"
+              >
+                {{ e.name }}
+              </button>
+            </li>
+          }
+        </ul>
+      </lum-card>
+      <lum-card title="Details">
+        @if (selectedEntity(); as ent) {
+          <div class="space-y-3 text-sm">
+            <p class="text-text-secondary">{{ ent.description }}</p>
+            <p><span class="text-text-muted">Table:</span> {{ ent.table }}</p>
+            <p><span class="text-text-muted">Primary key:</span> {{ ent.primary_key }}</p>
+            <div>
+              <span class="text-text-muted">Dimensions</span>
+              <ul class="mt-1 list-inside list-disc text-text-secondary">
+                @for (d of ent.dimensions; track d.name) {
+                  <li>{{ d.name }} → {{ d.column ?? d.expression }}</li>
+                }
+              </ul>
+            </div>
+            @if (metricsForEntity(ent.name).length) {
+              <p>
+                <span class="text-text-muted">Metrics:</span>
+                {{ metricsForEntity(ent.name).join(', ') }}
+              </p>
+            }
+            @if (relationshipsForEntity(ent.name).length) {
+              <ul class="space-y-1 text-xs text-text-secondary">
+                @for (r of relationshipsForEntity(ent.name); track r) {
+                  <li>{{ r }}</li>
+                }
+              </ul>
+            }
+          </div>
+        }
+      </lum-card>
+    </div>
+
+    <div class="mt-8">
+      <lum-card title="Warehouse tables">
+        <lum-input
+          label="Search tables"
+          [value]="tableSearch"
+          (valueChange)="tableSearch = $event"
+          placeholder="Filter by name…"
+          type="search"
+          descId="tbl-search"
+        />
+        <div class="mt-4 max-h-[28rem] overflow-auto rounded-md border border-border">
+          <table class="min-w-full text-left text-sm">
+            <thead class="sticky top-0 bg-bg-elevated text-xs uppercase text-text-muted">
+              <tr>
+                <th class="border-b border-border px-3 py-2">Table</th>
+                <th class="border-b border-border px-3 py-2">Columns</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of filteredTables(); track t.name) {
+                <tr class="border-b border-border align-top last:border-0">
+                  <td class="px-3 py-2 font-medium text-text">{{ t.name }}</td>
+                  <td class="px-3 py-2 text-text-secondary">
+                    @for (c of t.columns; track c.name) {
+                      <span class="mr-2 inline-block">{{ c.name }} ({{ c.data_type }})</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </lum-card>
+    </div>
+  }
+</div>

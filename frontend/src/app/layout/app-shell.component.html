@@ -1,0 +1,47 @@
+<div class="flex min-h-screen flex-col">
+  <header
+    class="sticky top-0 z-20 border-b border-border bg-bg/95 backdrop-blur-sm transition-colors duration-200"
+  >
+    <div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
+      <div class="flex items-center gap-8">
+        <span class="text-lg font-semibold tracking-tight text-text">lumen</span>
+        <nav class="flex gap-1" aria-label="Primary">
+          <a
+            routerLink="/ask"
+            routerLinkActive="text-accent border-b-2 border-accent"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="border-b-2 border-transparent px-3 py-2 text-sm font-medium text-text-secondary transition-colors duration-100 hover:text-text"
+            >Ask</a
+          >
+          <a
+            routerLink="/schema"
+            routerLinkActive="text-accent border-b-2 border-accent"
+            class="border-b-2 border-transparent px-3 py-2 text-sm font-medium text-text-secondary transition-colors duration-100 hover:text-text"
+            >Schema</a
+          >
+          <a
+            routerLink="/benchmarks"
+            routerLinkActive="text-accent border-b-2 border-accent"
+            class="border-b-2 border-transparent px-3 py-2 text-sm font-medium text-text-secondary transition-colors duration-100 hover:text-text"
+            >Benchmarks</a
+          >
+        </nav>
+      </div>
+      <button
+        type="button"
+        (click)="theme.toggle()"
+        class="inline-flex rounded-md border border-border p-2 text-text-secondary transition-colors duration-200 hover:bg-bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        [attr.aria-label]="theme.dark() ? 'Switch to light mode' : 'Switch to dark mode'"
+      >
+        @if (theme.dark()) {
+          <lucide-icon [img]="sun" class="h-4 w-4" />
+        } @else {
+          <lucide-icon [img]="moon" class="h-4 w-4" />
+        }
+      </button>
+    </div>
+  </header>
+  <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
+    <router-outlet />
+  </main>
+</div>

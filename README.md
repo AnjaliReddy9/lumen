@@ -2,6 +2,8 @@
 
 Natural-language questions over a real warehouse, grounded in a YAML semantic layer and Claude-generated SQL.
 
+**Demo walkthrough (video):** [YouTube placeholder — record in session 10](https://www.youtube.com/watch?v=REPLACE_SESSION_10)
+
 ### Schema-aware validation
 
 Lumen parses generated SQL and validates every table and column reference against the live warehouse schema before execution. Hallucinated identifiers are collected into a structured result, and the model may be asked to correct them in a follow-up turn, with available column names surfaced in the retry prompt. Today this works for `SELECT` queries including joins, common table expressions, and subqueries, with up to two correction rounds after the initial generation. `INSERT`, `UPDATE`, `DELETE`, and DDL are rejected by the validator because Lumen is read-only by design.
@@ -16,13 +18,38 @@ A **FastAPI** service exposes health, schema, interpretation, query (with option
 
 ### What's interesting about it
 
+| Ask (light) | Ask (dark) |
+|-------------|------------|
+| ![Ask view light](docs/images/ask-view.png) | ![Ask view dark](docs/images/ask-view-dark.png) |
+
+| Results chart | Benchmarks |
+|---------------|--------------|
+| ![Results chart](docs/images/results-chart.png) | ![Benchmarks](docs/images/benchmarks.png) |
+
+The screenshots above are **placeholder assets** so the README layout stays stable; replace them under `docs/images/` with real captures from a running stack when you record session 10.
+
 **Explain-back.** Before SQL is generated, the default `lumen query ask` path calls an interpreter model that returns structured JSON describing the question: a one-line summary, referenced semantic entities and metrics, inferred filters, sort, and limit. That interpretation is printed under `--- interpretation ---` every time so you can catch misunderstandings early.
 
 **Ambiguity resolution.** When the interpreter spots underspecified phrasing (for example a bare geography or "top customers" without a metric), it emits discrete options with a suggested default. The CLI walks you through each item with lettered choices; scripts can pass `--auto-resolve` to take defaults without prompts. Chosen answers are fed back into a second interpretation call before SQL generation.
 
 ## Status
 
-Lumen is in active development. Today you can introspect Postgres or DuckDB-backed SQLite, validate a YAML semantic directory against the live catalog, run `lumen query ask` with explain-back and ambiguity handling, run **offline or API-backed benchmarks** via `lumen eval run`, and serve the same stack over **HTTP** with `lumen api serve` (or Docker). What is not here yet includes a web UI, authentication, and production-grade rate limiting or observability. Those are planned as the pipeline hardens.
+Lumen is in active development. Today you can introspect Postgres or DuckDB-backed SQLite, validate a YAML semantic directory against the live catalog, run `lumen query ask` with explain-back and ambiguity handling, run **offline or API-backed benchmarks** via `lumen eval run`, and serve the same stack over **HTTP** with `lumen api serve` (or Docker). A **read-only Angular UI** (`frontend/`) covers Ask (with SSE streaming), Schema, and Benchmarks against the REST API. What is not here yet includes authentication, production-grade rate limiting, and deep observability. Those are planned as the pipeline hardens.
+
+## Running locally (API + UI)
+
+1. Copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY` (and optional path overrides for compose mounts).
+2. From the `lumen/` directory:
+
+```bash
+docker compose up --build
+```
+
+3. Open **http://localhost:4200** for the UI (nginx serves the Angular build and proxies `/api/*` to the API container on port 8000 inside the network). The API remains reachable directly at **http://localhost:8000** (for example `GET /health`).
+
+For UI development without Docker, run the API (`lumen api serve` or Docker `api` only) and `cd frontend && npm start`; the dev environment targets `http://localhost:8000` (see `frontend/src/environments/environment.development.ts`). CORS defaults already include `http://localhost:4200`.
+
+See [docs/ui.md](docs/ui.md) for design tokens and frontend layout.
 
 ## Quickstart
 
@@ -64,23 +91,41 @@ lumen query ask "What is the total revenue by country?" \
   --warehouse duckdb --path /tmp/chinook.sqlite --dialect sqlite
 ```
 
-### Docker API (optional)
+### Docker (API + UI)
 
 ```bash
 cp .env.example .env   # set ANTHROPIC_API_KEY and paths
-# Point LUMEN_SEMANTIC_HOST_DIR and LUMEN_WAREHOUSE_HOST_PATH in the shell, or edit compose mounts.
+# Optionally set LUMEN_SEMANTIC_HOST_DIR and LUMEN_WAREHOUSE_HOST_PATH for compose mounts.
 docker compose up --build
 curl -s http://localhost:8000/health
+open http://localhost:4200
+```
+
+The `frontend` service builds the Angular app and serves it on port **4200**; API routes are available to the browser under `/api/...` via nginx. You can still call the API on port 8000 directly:
+
+```bash
 curl -s -X POST http://localhost:8000/query \
   -H 'Content-Type: application/json' \
   -d '{"question": "How many tracks per genre?"}' | head
 ```
+
+### Docker API only (optional)
+
+If you only need the API container from an earlier workflow, `docker compose up api` still works; add the `frontend` service when you want the full stack.
 
 CLI flags are documented in [docs/usage.md](docs/usage.md). Validation internals are in [docs/validation.md](docs/validation.md). Interpretation and explain-back are in [docs/interpretation.md](docs/interpretation.md). Benchmarks and the API are in [docs/benchmarks.md](docs/benchmarks.md) and [docs/api.md](docs/api.md).
 
 ## Project structure
 
 ```text
+frontend/               Angular 19 UI (Tailwind, ngx-charts, SSE Ask flow).
+  src/app/
+    components/       Reusable primitives (button, card, toast stack, …).
+    features/         ask, schema, benchmarks routes.
+    layout/           App shell, header, theme toggle.
+    services/         LumenApiService, ThemeService, ToastService.
+    models/           Types aligned with FastAPI models.
+
 src/lumen/
   __init__.py           Package version exposed to the CLI.
   cli.py                Click entrypoint: schema, semantic, query, eval, and api commands.

@@ -1,0 +1,289 @@
+<div class="space-y-8">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight text-text">Ask</h1>
+    <p class="mt-1 text-sm text-text-secondary">
+      Natural language to SQL, grounded in your semantic model.
+    </p>
+  </div>
+
+  @if (phaseLabel) {
+    <p class="text-xs text-text-muted" aria-live="polite">{{ phaseLabel }}</p>
+  }
+
+  <form (ngSubmit)="submit()" class="space-y-4">
+    <lum-textarea
+      label=""
+      [value]="question"
+      (valueChange)="question = $event"
+      placeholder="What do you want to know?"
+      [rows]="4"
+      (textareaKeydown)="onKeydown($event)"
+    />
+    <div class="flex flex-wrap items-center gap-3">
+      <lum-button
+        variant="primary"
+        type="submit"
+        [loading]="submitting"
+        [disabled]="!question.trim()"
+      >
+        Run query
+      </lum-button>
+      <button
+        type="button"
+        (click)="optionsOpen = !optionsOpen"
+        class="text-sm text-accent transition-colors duration-100 hover:text-accent-hover"
+      >
+        Options
+      </button>
+    </div>
+    @if (optionsOpen) {
+      <fieldset class="space-y-2 rounded-md border border-border bg-bg-elevated p-4">
+        <legend class="sr-only">Query options</legend>
+        <label class="flex items-center gap-2 text-sm text-text-secondary">
+          <input type="checkbox" [(ngModel)]="skipInterpretation" name="skipI" />
+          Skip interpretation
+        </label>
+        <label class="flex items-center gap-2 text-sm text-text-secondary">
+          <input type="checkbox" [(ngModel)]="skipValidation" name="skipV" />
+          Skip validation
+        </label>
+      </fieldset>
+    }
+  </form>
+
+  @if (
+    !skipInterpretation &&
+    (interpState === 'loading' || (interpState === 'ready' && interpretation))
+  ) {
+    <div class="card-enter">
+      <lum-card title="Interpretation">
+        @if (interpState === 'loading') {
+          <div class="space-y-2">
+            <lum-skeleton height="1rem" width="80%" />
+            <lum-skeleton height="1rem" width="60%" />
+          </div>
+        } @else if (interpretation) {
+          <div class="crossfade-enter space-y-3 text-sm">
+            <p class="text-text">{{ interpretation.intent.intent_summary }}</p>
+            @if (interpretation.intent.entities_referenced.length) {
+              <p>
+                <span class="text-text-muted">Entities:</span>
+                {{ interpretation.intent.entities_referenced.join(', ') }}
+              </p>
+            }
+            @if (interpretation.intent.metrics_referenced.length) {
+              <p>
+                <span class="text-text-muted">Metrics:</span>
+                {{ interpretation.intent.metrics_referenced.join(', ') }}
+              </p>
+            }
+            @if (interpretation.intent.dimensions_referenced.length) {
+              <p>
+                <span class="text-text-muted">Dimensions:</span>
+                {{ interpretation.intent.dimensions_referenced.join(', ') }}
+              </p>
+            }
+            @if (interpretation.intent.time_grain) {
+              <p>
+                <span class="text-text-muted">Time grain:</span>
+                {{ interpretation.intent.time_grain }}
+              </p>
+            }
+            @if (interpretation.intent.filters.length) {
+              <div>
+                <span class="text-text-muted">Filters</span>
+                <ul class="mt-1 list-inside list-disc text-text-secondary">
+                  @for (
+                    f of interpretation.intent.filters;
+                    track f.column_or_dimension + f.operator
+                  ) {
+                    <li>{{ f.column_or_dimension }} {{ f.operator }} {{ f.value }}</li>
+                  }
+                </ul>
+              </div>
+            }
+            @if (interpretation.intent.sort) {
+              <p>
+                <span class="text-text-muted">Sort:</span>
+                {{ interpretation.intent.sort.column_or_dimension }}
+                {{ interpretation.intent.sort.direction }}
+              </p>
+            }
+            @if (
+              interpretation.intent.limit !== null && interpretation.intent.limit !== undefined
+            ) {
+              <p>
+                <span class="text-text-muted">Limit:</span>
+                {{ interpretation.intent.limit }}
+              </p>
+            }
+          </div>
+        }
+      </lum-card>
+    </div>
+  }
+
+  @if (interpretation?.ambiguities?.length && result?.error === 'ambiguous_interpretation') {
+    <lum-card title="Resolve these before running">
+      <div class="space-y-4">
+        @for (a of interpretation!.ambiguities; track trackAmb($index, a)) {
+          <fieldset class="space-y-2">
+            <legend class="text-sm font-medium text-text">{{ a.description }}</legend>
+            @for (opt of a.options; track opt) {
+              <label class="flex items-center gap-2 text-sm text-text-secondary">
+                <input
+                  type="radio"
+                  [attr.name]="a.description"
+                  [value]="opt"
+                  [ngModel]="ambiguitySelections[a.description]"
+                  (ngModelChange)="ambiguitySelections[a.description] = $event"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                {{ opt }}
+              </label>
+            }
+          </fieldset>
+        }
+        <lum-button
+          variant="primary"
+          type="button"
+          [loading]="submitting"
+          (clicked)="useAmbiguityAnswers()"
+        >
+          Use these answers
+        </lum-button>
+      </div>
+    </lum-card>
+  }
+
+  @if (sqlState === 'loading' || (result?.generated_sql && sqlState !== 'idle')) {
+    <div class="card-enter">
+      <lum-card title="Generated SQL">
+        @if (sqlState === 'loading' && !result?.generated_sql) {
+          <lum-skeleton height="6rem" width="100%" />
+        } @else {
+          @if (result; as res) {
+            @if (res.generated_sql) {
+              <div class="crossfade-enter space-y-2">
+                <lum-code-block [code]="res.generated_sql" />
+                <p class="text-xs text-text-muted">Cost {{ formatCost(res.cost_usd) }}</p>
+              </div>
+            }
+          }
+        }
+      </lum-card>
+    </div>
+  }
+
+  @if (valState === 'loading' || (result && valState === 'ready')) {
+    <div class="card-enter">
+      <lum-card title="Validation">
+        @if (valState === 'loading' && !result) {
+          <lum-skeleton height="2rem" width="40%" />
+        } @else if (result) {
+          <lum-badge [variant]="result.validation.valid ? 'success' : 'error'">
+            {{ result.validation.valid ? 'valid' : 'invalid' }}
+          </lum-badge>
+          @if (!result.validation.valid && result.validation.issues.length) {
+            <ul class="mt-3 space-y-2 text-sm text-text-secondary">
+              @for (issue of result.validation.issues; track issue.message) {
+                <li>
+                  <span class="font-medium text-text">{{ issue.severity }}</span>
+                  {{ issue.message }}
+                </li>
+              }
+            </ul>
+          }
+        }
+      </lum-card>
+    </div>
+  }
+
+  @if (resState === 'loading' || resState === 'ready' || resState === 'error') {
+    <div class="card-enter" aria-live="polite">
+      <lum-card title="Results">
+        @if (resState === 'loading' && result && !result.rows && !result.error) {
+          <div class="flex items-center gap-2 text-sm text-text-muted">
+            <lum-spinner />
+            Loading results…
+          </div>
+        } @else if (result?.error && result!.error !== 'ambiguous_interpretation') {
+          <p class="text-sm text-error">{{ result!.error }}</p>
+        } @else if (result?.rows && result!.rows!.length) {
+          @let res = result!;
+          <div class="crossfade-enter space-y-3">
+            <div class="flex flex-wrap gap-4 text-xs text-text-muted">
+              <span>{{ res.row_count }} rows</span>
+              <span>{{ formatLatency(res.latency_ms) }}</span>
+            </div>
+            <div class="flex gap-2 border-b border-border text-sm">
+              <button
+                type="button"
+                class="border-b-2 px-3 py-2 transition-colors duration-100"
+                [class.border-accent]="resultsTab === 'table'"
+                [class.text-text]="resultsTab === 'table'"
+                [class.border-transparent]="resultsTab !== 'table'"
+                [class.text-text-secondary]="resultsTab !== 'table'"
+                (click)="resultsTab = 'table'"
+              >
+                Table
+              </button>
+              <button
+                type="button"
+                class="border-b-2 px-3 py-2 transition-colors duration-100"
+                [class.border-accent]="resultsTab === 'chart'"
+                [class.text-text]="resultsTab === 'chart'"
+                [class.border-transparent]="resultsTab !== 'chart'"
+                [class.text-text-secondary]="resultsTab !== 'chart'"
+                (click)="resultsTab = 'chart'"
+              >
+                Chart
+              </button>
+            </div>
+            @if (resultsTab === 'table') {
+              <div class="overflow-x-auto rounded-md border border-border">
+                <table class="min-w-full text-left text-sm">
+                  <thead class="sticky top-0 bg-bg-elevated text-xs uppercase text-text-muted">
+                    <tr>
+                      @for (col of objectKeys(res.rows![0]); track col) {
+                        <th class="border-b border-border px-3 py-2 font-medium">{{ col }}</th>
+                      }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of res.rows!; track $index) {
+                      <tr class="border-b border-border last:border-0">
+                        @for (col of objectKeys(row); track col) {
+                          <td class="px-3 py-2 text-text-secondary">{{ row[col] }}</td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              @if (chartModel.kind === 'bar') {
+                <div class="h-[320px]">
+                  <ngx-charts-bar-vertical
+                    [view]="[720, 320]"
+                    [results]="chartModel.results"
+                    [xAxis]="true"
+                    [yAxis]="true"
+                    [legend]="false"
+                    [showXAxisLabel]="true"
+                    [showYAxisLabel]="true"
+                    [scheme]="chartColorScheme"
+                  />
+                </div>
+              } @else {
+                <p class="text-sm text-text-muted">
+                  Chart view not available for this result shape.
+                </p>
+              }
+            }
+          </div>
+        }
+      </lum-card>
+    </div>
+  }
+</div>

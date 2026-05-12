@@ -15,6 +15,13 @@ services:
       - ${LUMEN_SEMANTIC_HOST_DIR:-./tests/fixtures/chinook_semantic}:/data/semantic:ro
       - ${LUMEN_WAREHOUSE_HOST_PATH:-./tests/fixtures}:/data:ro
 
+  frontend:
+    build: ./frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - api
+
   # db:
   #   image: postgres:16
   #   environment:

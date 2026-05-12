@@ -23,7 +23,7 @@ class EvalRunTrigger(BaseModel):
 @router.get("/runs")
 def list_eval_runs(
     settings: Annotated[Settings, Depends(get_settings)],
-) -> list[dict[str, str | int]]:
+) -> list[dict[str, str | int | float]]:
     d = settings.eval_runs_dir
     if not d.is_dir():
         return []
@@ -37,7 +37,14 @@ def list_eval_runs(
             {
                 "run_id": run.run_id,
                 "benchmark": run.benchmark,
+                "model": run.model,
                 "cases_completed": run.cases_completed,
+                "cases_total": run.cases_total,
+                "started_at": run.started_at.isoformat(),
+                "execution_accuracy": run.summary.execution_accuracy,
+                "validation_pass_rate": run.summary.validation_pass_rate,
+                "generation_success_rate": run.summary.generation_success_rate,
+                "total_cost_usd": run.summary.total_cost_usd,
                 "path": str(p),
             }
         )
