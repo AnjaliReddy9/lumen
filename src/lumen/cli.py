@@ -5,6 +5,7 @@ import click
 from lumen import __version__
 from lumen.generation.generator import GeneratedSQL, SQLGenerator
 from lumen.generation.runner import QueryResult, run_generated_sql
+from lumen.interpretation.models import Interpretation
 from lumen.llm.anthropic_provider import AnthropicProvider
 from lumen.semantic.loader import load_semantic_model
 from lumen.semantic.validator import validate_semantic_model
@@ -135,6 +136,85 @@ def _print_validation_summary(generated: GeneratedSQL) -> None:
             click.echo(f"  [{issue.severity}] {issue.code}: {issue.message}")
 
 
+def _print_interpretation(interp: Interpretation) -> None:
+    click.echo("--- interpretation ---")
+    summary = interp.intent.intent_summary.strip() or "(not stated)"
+    click.echo(f"I understand this as: {summary}")
+    click.echo(f"Entities: {', '.join(interp.intent.entities_referenced) or '(none)'}")
+    click.echo(f"Metrics: {', '.join(interp.intent.metrics_referenced) or '(none)'}")
+    click.echo(f"Dimensions: {', '.join(interp.intent.dimensions_referenced) or '(none)'}")
+    click.echo(f"Time grain: {interp.intent.time_grain or '(none)'}")
+    if interp.intent.filters:
+        click.echo("Filters:")
+        for f in interp.intent.filters:
+            click.echo(
+                f"  - {f.column_or_dimension} {f.operator} {f.value!r} ({f.confidence})"
+            )
+    else:
+        click.echo("Filters: (none)")
+    if interp.intent.sort:
+        click.echo(
+            f"Sort: {interp.intent.sort.column_or_dimension} "
+            f"{interp.intent.sort.direction.upper()}"
+        )
+    else:
+        click.echo("Sort: (none)")
+    lim = interp.intent.limit if interp.intent.limit is not None else "(none)"
+    click.echo(f"Limit: {lim}")
+    click.echo(f"Interpreter confidence: {interp.confidence}")
+    if interp.ambiguities:
+        click.echo("")
+        click.echo("Ambiguities (resolve in a follow-up run or use --auto-resolve):")
+        for i, amb in enumerate(interp.ambiguities, start=1):
+            opts = "; ".join(amb.options)
+            d = amb.suggested_default or "(no default)"
+            click.echo(f"  {i}. {amb.description}")
+            click.echo(f"     Options: {opts}")
+            click.echo(f"     Default: {d}")
+
+
+def _collect_resolutions(interp: Interpretation, auto_resolve: bool) -> dict[str, str]:
+    resolutions: dict[str, str] = {}
+    if not interp.ambiguities:
+        return resolutions
+    if auto_resolve:
+        click.echo("")
+        click.echo("--- auto-resolve ---")
+        for amb in interp.ambiguities:
+            pick = amb.suggested_default if amb.suggested_default else amb.options[0]
+            resolutions[amb.description] = pick
+            click.echo(f"{amb.description!r} -> {pick!r}")
+        return resolutions
+
+    click.echo("")
+    click.echo("--- ambiguities ---")
+    for i, amb in enumerate(interp.ambiguities, start=1):
+        click.echo(f"{i}. {amb.description}")
+        letters = [chr(ord("a") + j) for j in range(len(amb.options))]
+        for j, opt in enumerate(amb.options):
+            click.echo(f"   {letters[j]}) {opt}")
+        default_label = amb.suggested_default if amb.suggested_default else "(first option)"
+        click.echo(f"   Default: {default_label}")
+        while True:
+            hint = "/".join(letters)
+            raw = click.prompt(
+                f"Choose [{hint}, or Enter for default]",
+                default="",
+                show_default=False,
+            )
+            raw_st = raw.strip()
+            if not raw_st:
+                chosen = amb.suggested_default if amb.suggested_default else amb.options[0]
+                break
+            if len(raw_st) == 1 and raw_st.lower() in letters:
+                idx = ord(raw_st.lower()) - ord("a")
+                chosen = amb.options[idx]
+                break
+            click.echo("Invalid choice; type a letter or press Enter for the default.")
+        resolutions[amb.description] = chosen
+    return resolutions
+
+
 @main.group("query")
 def query_group() -> None:
     pass
@@ -162,6 +242,21 @@ def query_group() -> None:
     is_flag=True,
     help="Skip schema-aware SQL validation (debug only; execution may still fail)",
 )
+@click.option(
+    "--no-interpret",
+    is_flag=True,
+    help="Skip explain-back and interpretation; generate SQL directly (session 4 path)",
+)
+@click.option(
+    "--explain-only",
+    is_flag=True,
+    help="Run interpretation only; do not generate or execute SQL",
+)
+@click.option(
+    "--auto-resolve",
+    is_flag=True,
+    help="Pick default or first ambiguity option without prompting (non-interactive)",
+)
 @click.pass_context
 def query_ask(
     ctx: click.Context,
@@ -173,10 +268,18 @@ def query_ask(
     dialect: str,
     dry_run: bool,
     skip_validation: bool,
+    no_interpret: bool,
+    explain_only: bool,
+    auto_resolve: bool,
 ) -> None:
     question_text = " ".join(question).strip()
     if not question_text:
         raise click.UsageError("question is empty")
+    if no_interpret and explain_only:
+        raise click.UsageError("--no-interpret and --explain-only cannot be used together")
+    if no_interpret and auto_resolve:
+        raise click.UsageError("--no-interpret and --auto-resolve cannot be used together")
+
     model = load_semantic_model(semantic_dir)
     wh = _open_warehouse(warehouse, path, url)
     try:
@@ -184,9 +287,51 @@ def query_ask(
         validate_semantic_model(model, schema)
         provider = AnthropicProvider()
         gen = SQLGenerator(provider)
-        generated = gen.generate(
-            question_text, model, schema, dialect, skip_validation=skip_validation
-        )
+
+        if no_interpret:
+            generated = gen.generate(
+                question_text, model, schema, dialect, skip_validation=skip_validation
+            )
+            click.echo("--- generated sql ---")
+            click.echo(generated.sql)
+            _print_validation_summary(generated)
+            if not skip_validation and not generated.validation.valid:
+                click.echo("validation failed; not executing SQL.")
+                ctx.exit(1)
+            if dry_run:
+                return
+            result = run_generated_sql(generated, wh)
+            click.echo("--- result ---")
+            _print_query_result(result)
+            return
+
+        try:
+            interp, sql_gen = gen.generate_with_interpretation(
+                question_text, model, schema, dialect, skip_validation=skip_validation
+            )
+        except TypeError as err:
+            raise click.ClickException(str(err)) from err
+
+        _print_interpretation(interp)
+        if explain_only:
+            return
+
+        resolutions: dict[str, str] = {}
+        if sql_gen is None:
+            resolutions = _collect_resolutions(interp, auto_resolve)
+            interp, sql_gen = gen.generate_with_resolutions(
+                question_text,
+                model,
+                schema,
+                dialect,
+                resolutions,
+                skip_validation=skip_validation,
+            )
+
+        if sql_gen is None:
+            raise RuntimeError("SQL generation failed after ambiguity resolution")
+        generated = sql_gen
+        click.echo("")
         click.echo("--- generated sql ---")
         click.echo(generated.sql)
         _print_validation_summary(generated)
